@@ -7,3 +7,9 @@ devenv.local.nix
 
 # pre-commit
 .pre-commit-config.yaml
+
+# Nix build outputs
+result
+result-*
+*.drv
+*.build
