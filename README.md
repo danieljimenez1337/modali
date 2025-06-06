@@ -12,32 +12,59 @@ This project provides a Nix Flake for easy building, development, and integratio
     (Add `experimental-features = nix-command flakes` to your `nix.conf`.)
 2.  **Home Manager**: You should have Home Manager installed and configured to manage your user environment.
 
-### Using the Modali Home Manager Module
+### Home Manager Integration (Simple)
 
-1.  **Add Modali Flake as an Input**:
-    In your Home Manager flake (e.g., `~/your-home-manager-config/flake.nix`), add this Modali project as an input:
+You can use Modali with Home Manager using the built-in module from the flake. **No need to manually add to `home.packages` or handle `bindings.json`!**
 
-    ```nix
-    {
-      inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable"; # Or your preferred channel
-        home-manager = {
-          url = "github:nix-community/home-manager";
-          inputs.nixpkgs.follows = "nixpkgs";
-        };
-        # Add Modali launcher flake
-        modali-launcher = {
-          url = "path:/path/to/your/modali/project"; # Or github:your-username/modali if published
-          # If modali-launcher also needs nixpkgs, and you want it to use the same one:
-          # inputs.nixpkgs.follows = "nixpkgs"; 
-        };
-        # ... other inputs
-      };
+#### 1. Add Modali as an input to your flake:
 
-      outputs = { self, nixpkgs, home-manager, modali-launcher, ... }:
-        # ... your Home Manager outputs structure
-    }
-    ```
+```nix
+inputs.modali-launcher.url = "github:danieljimenez1337/modali";
+```
+
+#### 2. Import the module and enable Modali in your Home Manager configuration:
+
+```nix
+{ config, pkgs, ... }:
+{
+  imports = [
+    inputs.modali-launcher.homeManagerModules.default
+  ];
+
+  programs.modali = {
+    enable = true;
+    keybindings = [
+      {
+        key = "g";
+        description = "Go to Google";
+        command = "xdg-open https://google.com";
+      }
+      {
+        key = "s";
+        description = "System";
+        sub_actions = [
+          { key = "l"; command = "loginctl lock-session"; description = "Lock Screen"; }
+          { key = "r"; command = "systemctl reboot"; description = "Reboot"; }
+          { key = "p"; command = "systemctl poweroff"; description = "Power Off"; }
+        ];
+      }
+    ];
+  };
+}
+```
+
+#### 3. Apply your configuration:
+
+```sh
+home-manager switch --flake .#<your-system-username>
+```
+
+**That's it!**
+- Modali will be installed automatically.
+- Your keybindings will be written to `~/.config/modali/bindings.json`.
+- No manual package or config file management needed.
+
+For more advanced usage, see the flake or open an issue on [GitHub](https://github.com/danieljimenez1337/modali).
 
 2.  **Import and Configure the Modali Module**:
     In your `home.nix` (or a file imported by it where you define Home Manager configurations for your user), import the Modali module and configure it:

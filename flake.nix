@@ -56,50 +56,27 @@
       program = "${self.packages.${system}.default}/bin/modali";
     };
 
-    homeManagerModules.default = {
-      # Define this module for x86_64-linux, can be adapted for other systems
-      # by passing system through or iterating over supportedSystems
-      imports = [ home-manager.nixosModules.home-manager ]; # If used in NixOS config
-                                                            # For standalone HM, this might not be needed or structured differently
-                                                            # Simpler approach for flake module:
-      config = { lib, pkgs, config, ... }:
-        let
-          cfg = config.programs.modali;
-          modaliPackage = self.packages.${system}.default;
-        in
-        {
-          options.programs.modali = {
-            enable = lib.mkEnableOption "Whether to enable Modali launcher";
-            package = lib.mkOption {
-              type = lib.types.package;
-              default = modaliPackage;
-              description = "Modali package to use.";
-            };
-            keybindings = lib.mkOption {
-              type = lib.types.nullOr (lib.types.listOf lib.types.attrs); # Expects a list of attribute sets for the JSON array
-              default = null;
-              description = ''
-                Keybindings configuration for Modali.
-                If set, this attribute set will be converted to JSON and written to bindings.json.
-                Example: 
-                  [
-                    { key = "f"; description = "File operations"; sub_actions = [ ... ]; }
-                    { key = "p"; command = "firefox"; description = "Launch Firefox"; }
-                  ]
-                If null, a default bindings.json from the package will be used as a template.
-              '';
-            };
-          };
-
-          config = lib.mkIf cfg.enable {
-            home.packages = [ cfg.package ];
-          } // lib.mkIf (cfg.enable && cfg.keybindings != null) { # Merge this block if keybindings are provided
-            xdg.configFile."modali/bindings.json" = {
-              # User has defined keybindings in their Home Manager config
-              text = pkgs.formats.json {}.generate "modali-bindings.json" cfg.keybindings;
-            };
+    homeManagerModules.default = { config, lib, pkgs, ... }:
+      let
+        cfg = config.programs.modali;
+        modaliPackage = self.packages.${system}.default;
+      in
+      {
+        options.programs.modali = {
+          enable = lib.mkEnableOption "Enable the Modali vim-like launcher";
+          keybindings = lib.mkOption {
+            type = with lib.types; listOf attrs;
+            default = [];
+            description = "Keybindings for Modali, as a list of attribute sets.";
           };
         };
-    };
+
+        config = lib.mkIf cfg.enable {
+          home.packages = [ modaliPackage ];
+          xdg.configFile."modali/bindings.json".text =
+            pkgs.formats.json {}.generate "modali-bindings.json" cfg.keybindings;
+        };
+      };
+
   };
 }
