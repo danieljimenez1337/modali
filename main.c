@@ -4,6 +4,7 @@
 #include <stdio.h>   // For g_print
 #include <string.h>  // For strlen, strcmp
 #include <json-glib/json-glib.h> // For JSON parsing
+#include <stdlib.h>  // For setenv
 
 // --- Key Binding Structures ---
 typedef struct KeyAction KeyAction;
@@ -398,12 +399,6 @@ static void activate(GtkApplication *app, gpointer user_data) {
     current_key_sequence = g_string_new("");
     load_key_bindings_from_json("bindings.json"); // Load bindings
     current_node_options = g_loaded_root_actions; // Start with loaded root options
-    update_display_label(); // Initial display
-
-    // Setup key event controller
-    GtkEventController *key_controller = gtk_event_controller_key_new();
-    g_signal_connect(key_controller, "key-pressed", G_CALLBACK(on_key_pressed_event), NULL);
-    gtk_widget_add_controller(window, key_controller); // Add controller to window
 
     // Load CSS
     GtkCssProvider *provider = gtk_css_provider_new();
@@ -411,16 +406,29 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_style_context_add_provider_for_display(
         gdk_display_get_default(),
         GTK_STYLE_PROVIDER(provider),
-        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+        GTK_STYLE_PROVIDER_PRIORITY_USER
     );
-    g_object_unref(provider);
+    g_object_unref(provider); // Unref provider after adding it
 
-    gtk_widget_add_css_class(window, "modali-launcher");
+    // Initialize global state (key bindings, etc.)
+    // load_key_bindings_from_json("bindings.json"); // Redundant: Already loaded before 'Widget creation' log
+    // current_node_options = g_loaded_root_actions; // Redundant: Already set
+    update_display_label(); // Initial display update (already timed internally)
 
-    gtk_window_present(GTK_WINDOW(window));
+    // Setup key event controller
+    GtkEventController *key_controller = gtk_event_controller_key_new();
+    g_signal_connect(key_controller, "key-pressed", G_CALLBACK(on_key_pressed_event), NULL);
+    gtk_widget_add_controller(window, key_controller); // Add controller to window
+
+    gtk_widget_add_css_class(window, "modali-launcher"); // Apply top-level window CSS class
+    gtk_widget_set_visible(window, TRUE);
+    gtk_window_present(GTK_WINDOW(window)); // Ensure window gets focus
 }
 
 int main(int argc, char **argv) {
+    // Force Cairo renderer for GSK to ensure fast startup
+    setenv("GSK_RENDERER", "cairo", 1); // 1 means overwrite if already set
+
     GtkApplication *app = gtk_application_new("org.example.modali.launcher", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
     
