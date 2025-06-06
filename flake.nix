@@ -10,7 +10,8 @@
   outputs = {
     self,
     nixpkgs,
-    home-manager, ...
+    home-manager,
+    ...
   }: let
     system = "x86_64-linux"; # Or your target system
     pkgs = nixpkgs.legacyPackages.${system};
@@ -56,27 +57,28 @@
       program = "${self.packages.${system}.default}/bin/modali";
     };
 
-    homeManagerModules.default = { config, lib, pkgs, ... }:
-      let
-        cfg = config.programs.modali;
-        modaliPackage = self.packages.${system}.default;
-      in
-      {
-        options.programs.modali = {
-          enable = lib.mkEnableOption "Enable the Modali vim-like launcher";
-          keybindings = lib.mkOption {
-            type = with lib.types; listOf attrs;
-            default = [];
-            description = "Keybindings for Modali, as a list of attribute sets.";
-          };
-        };
-
-        config = lib.mkIf cfg.enable {
-          home.packages = [ modaliPackage ];
-          xdg.configFile."modali/bindings.json".text =
-            pkgs.formats.json {}.generate "modali-bindings.json" cfg.keybindings;
+    homeManagerModules.default = {
+      config,
+      lib,
+      pkgs,
+      ...
+    }: let
+      cfg = config.programs.modali;
+      modaliPackage = self.packages.${system}.default;
+    in {
+      options.programs.modali = {
+        enable = lib.mkEnableOption "Enable the Modali vim-like launcher";
+        keybindings = lib.mkOption {
+          type = with lib.types; listOf attrs;
+          default = [];
+          description = "Keybindings for Modali, as a list of attribute sets.";
         };
       };
 
+      config = lib.mkIf cfg.enable {
+        home.packages = [modaliPackage];
+        xdg.configFile."modali/bindings.json".text = builtins.toJSON cfg.keybindings;
+      };
+    };
   };
 }
