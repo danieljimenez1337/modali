@@ -1,10 +1,19 @@
-#include <gtk/gtk.h>
-#include <gdk/gdk.h> // For GDK_KEY_* constants and gdk_keyval_name
-#include <glib.h>    // For GString
+// Standard C libraries
 #include <stdio.h>   // For g_print
 #include <string.h>  // For strlen, strcmp
+#include <stdlib.h>  // For setenv, realpath
+#include <limits.h>  // For PATH_MAX
+
+// GLib family
+#include <glib.h>    // For GString, g_get_user_config_dir(), etc.
+#include <gio/gio.h> // For GApplication, g_get_application_executable_path(), etc.
+#include <gio/gapplication.h> // Explicitly for GApplication specifics, if needed
+
+// GTK family (GTK includes GDK)
+#include <gtk/gtk.h> // Includes GDK, Pango, etc.
+
+// Other libraries
 #include <json-glib/json-glib.h> // For JSON parsing
-#include <stdlib.h>  // For setenv
 
 // --- Key Binding Structures ---
 typedef struct KeyAction KeyAction;
@@ -397,12 +406,42 @@ static void activate(GtkApplication *app, gpointer user_data) {
 
     // Initialize global state
     current_key_sequence = g_string_new("");
-    load_key_bindings_from_json("bindings.json"); // Load bindings
+
+    // Construct path for bindings.json in XDG config directory
+    const char *user_config_dir = g_get_user_config_dir();
+    char *bindings_path = g_build_filename(user_config_dir, "modali", "bindings.json", NULL);
+    load_key_bindings_from_json(bindings_path);
+    g_free(bindings_path);
     current_node_options = g_loaded_root_actions; // Start with loaded root options
 
     // Load CSS
     GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(provider, "style.css");
+    char *style_path_final = NULL;
+    char resolved_exe_path[PATH_MAX];
+
+    if (realpath("/proc/self/exe", resolved_exe_path) != NULL) {
+        char *exe_dir = g_path_get_dirname(resolved_exe_path);
+        if (exe_dir) {
+            // Path relative to exe: $exe_dir/../share/modali/style.css
+            style_path_final = g_build_filename(exe_dir, "..", "share", "modali", "style.css", NULL);
+            g_free(exe_dir);
+        } else {
+            g_warning("Could not get directory name from resolved executable path: %s. Falling back to local style.css", resolved_exe_path);
+            style_path_final = g_strdup("style.css");
+        }
+    } else {
+        // Fallback if realpath("/proc/self/exe", ...) failed
+        g_warning("realpath(\"/proc/self/exe\") failed. Falling back to local style.css");
+        style_path_final = g_strdup("style.css");
+    }
+
+    if (style_path_final) {
+        gtk_css_provider_load_from_path(provider, style_path_final);
+        g_print("Attempted to load CSS from: %s\n", style_path_final);
+        g_free(style_path_final);
+    } else {
+        g_warning("Could not determine path for style.css");
+    }
     gtk_style_context_add_provider_for_display(
         gdk_display_get_default(),
         GTK_STYLE_PROVIDER(provider),
