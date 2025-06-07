@@ -1,12 +1,12 @@
 use std::fs;
 
-use iced::widget::{Column, button, column, container, row, text, text_input};
+use iced::widget::{Column, container, row, text};
 use iced::{Alignment, Color, Element, Event, Length, Task as Command, Theme, event};
 use iced_layershell::Application;
 use iced_layershell::reexport::{Anchor, Layer};
 use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
 use iced_layershell::to_layer_message;
-// use std::fs;
+use parser::WhichTreeKind;
 
 mod input;
 mod parser;
@@ -76,7 +76,7 @@ impl Application for Modali {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::IcedEvent(Event::Keyboard(key_event)) => {
-                input::handle_keyboard_input(key_event)
+                input::handle_keyboard_input(self, key_event)
             }
             _ => Command::none(),
         }
@@ -87,21 +87,44 @@ impl Application for Modali {
         let mut col1 = Column::new();
         let mut col2 = Column::new();
 
-        // for (i, label) in self.
+        let tree = match self.state.len() {
+            0 => self.whichtree.clone(),
+            _ => match parser::search_which_tree(&self.whichtree, self.state.clone()) {
+                Some(x) => match x.kind {
+                    WhichTreeKind::Command(_) => Vec::new(),
+                    WhichTreeKind::Children(x) => x.clone(),
+                },
+                None => Vec::new(),
+            },
+        };
 
-        // let center = column![text("hello").size(50),]
-        //     .align_x(Alignment::Center)
-        //     .padding(20)
-        //     .width(Length::Fill)
-        //     .height(Length::Fill);
+        for (i, tree_node) in tree.iter().enumerate() {
+            let col_num = i % 3;
+            let label = tree_node.label.clone();
+            match col_num {
+                0 => {
+                    col0 = col0.push(text(label).size(22));
+                }
 
-        let main = row![col0, col1, col2]
-            .padding(20)
-            .spacing(10)
+                1 => {
+                    col1 = col1.push(text(label).size(22));
+                }
+                2 => {
+                    col2 = col2.push(text(label).size(22));
+                }
+                _ => panic!(),
+            }
+        }
+
+        let main = row![col0, col1, col2].spacing(40);
+
+        container(main)
             .width(Length::Fill)
-            .height(Length::Fill);
-
-        container(main).style(main_container_style()).into()
+            .height(Length::Fill)
+            .style(main_container_style())
+            .align_x(Alignment::Center)
+            .align_y(Alignment::Center)
+            .into()
     }
 
     fn style(&self, theme: &Self::Theme) -> iced_layershell::Appearance {

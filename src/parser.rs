@@ -55,8 +55,6 @@ pub fn actions_to_tree(actions: &[Action]) -> Vec<WhichTreeNode> {
     actions.iter().map(|a| a.to_tree_node()).collect()
 }
 
-// pub fn search_which_tree(tree: &[WhichTreeNode], s: String) -> WhichTreeNode
-
 fn parse_char(s: &str) -> char {
     if s.chars().count() != 1 {
         panic!("This key is not a single char")
@@ -64,15 +62,52 @@ fn parse_char(s: &str) -> char {
     s.chars().next().unwrap()
 }
 
+#[derive(Clone)]
 pub struct WhichTreeNode {
-    key: char,
-    label: String,
-    kind: WhichTreeKind,
+    pub key: char,
+    pub label: String,
+    pub kind: WhichTreeKind,
 }
 
+#[derive(Clone)]
 pub enum WhichTreeKind {
     Command(String),
     Children(Vec<WhichTreeNode>),
+}
+
+pub fn search_which_tree(tree: &[WhichTreeNode], s: String) -> Option<WhichTreeNode> {
+    let chars: Vec<char> = s.chars().collect();
+    search_recursive(tree, &chars, 0)
+}
+
+fn search_recursive(
+    nodes: &[WhichTreeNode],
+    chars: &[char],
+    index: usize,
+) -> Option<WhichTreeNode> {
+    if index >= chars.len() {
+        return nodes
+            .iter()
+            .find(|node| matches!(node.kind, WhichTreeKind::Command(_)))
+            .cloned();
+    }
+
+    let current_char = chars[index];
+
+    if let Some(node) = nodes.iter().find(|node| node.key == current_char) {
+        match &node.kind {
+            WhichTreeKind::Command(_) => {
+                if index == chars.len() - 1 {
+                    Some(node.clone())
+                } else {
+                    None
+                }
+            }
+            WhichTreeKind::Children(children) => search_recursive(children, chars, index + 1),
+        }
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
