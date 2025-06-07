@@ -13,3 +13,8 @@ result
 result-*
 *.drv
 *.build
+
+
+# Added by cargo
+
+/target

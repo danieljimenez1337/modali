@@ -1,0 +1,37 @@
+---
+source: src/main.rs
+expression: json
+---
+[
+  {
+    "type": "KeyAction",
+    "key": "r",
+    "description": "Open Rofi",
+    "command": "rofi -show drun"
+  },
+  {
+    "type": "KeyAction",
+    "key": "g",
+    "description": "Go to Google",
+    "command": "xdg-open https://google.com"
+  },
+  {
+    "type": "SubAction",
+    "key": "f",
+    "description": "Firefox options...",
+    "sub_actions": [
+      {
+        "type": "KeyAction",
+        "key": "r",
+        "description": "Open Rofi",
+        "command": "rofi -show drun"
+      },
+      {
+        "type": "KeyAction",
+        "key": "g",
+        "description": "Go to Google",
+        "command": "xdg-open https://google.com"
+      }
+    ]
+  }
+]
