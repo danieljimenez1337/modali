@@ -1,27 +1,16 @@
-use iced::widget::{button, column, row, text, text_input};
+use std::fs;
+
+use iced::widget::{Column, button, column, container, row, text, text_input};
 use iced::{Alignment, Color, Element, Event, Length, Task as Command, Theme, event};
 use iced_layershell::Application;
 use iced_layershell::reexport::{Anchor, Layer};
 use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
 use iced_layershell::to_layer_message;
-use serde::{Deserialize, Serialize};
 // use std::fs;
 
-#[derive(Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum Action {
-    SubAction {
-        key: String,
-        description: String,
-        sub_actions: Vec<Action>,
-    },
-
-    KeyAction {
-        key: String,
-        description: String,
-        command: String,
-    },
-}
+mod input;
+mod parser;
+mod util;
 
 pub fn main() -> Result<(), iced_layershell::Error> {
     let binded_output_name = std::env::args().nth(1);
@@ -30,9 +19,9 @@ pub fn main() -> Result<(), iced_layershell::Error> {
         None => StartMode::Active,
     };
 
-    Counter::run(Settings {
+    Modali::run(Settings {
         layer_settings: LayerShellSettings {
-            size: Some((400, 400)),
+            size: Some((1200, 400)),
             exclusive_zone: 0,
             anchor: Anchor::Top | Anchor::Bottom | Anchor::Left | Anchor::Right,
             start_mode,
@@ -43,18 +32,9 @@ pub fn main() -> Result<(), iced_layershell::Error> {
     })
 }
 
-struct Counter {
-    value: i32,
-    text: String,
-}
-
-#[derive(Debug, Clone, Copy)]
-enum WindowDirection {
-    Top,
-    Left,
-    Right,
-    Bottom,
-    Center,
+struct Modali {
+    state: String,
+    whichtree: Vec<parser::WhichTreeNode>,
 }
 
 // Because new iced delete the custom command, so now we make a macro crate to generate
@@ -63,31 +43,30 @@ enum WindowDirection {
 #[derive(Debug, Clone)]
 #[doc = "Some docs"]
 enum Message {
-    IncrementPressed,
-    DecrementPressed,
-    TextInput(String),
-    Direction(WindowDirection),
     IcedEvent(Event),
 }
 
-impl Application for Counter {
+impl Application for Modali {
     type Message = Message;
     type Flags = ();
     type Theme = Theme;
     type Executor = iced::executor::Default;
 
     fn new(_flags: ()) -> (Self, Command<Message>) {
+        let contents = fs::read_to_string("bindings.json").unwrap();
+        let actions: Vec<parser::Action> = serde_json::from_str(&contents).unwrap();
+        let whichtree = parser::actions_to_tree(&actions);
         (
             Self {
-                value: 0,
-                text: "hello, write something here".to_string(),
+                state: "".to_owned(),
+                whichtree,
             },
             Command::none(),
         )
     }
 
     fn namespace(&self) -> String {
-        String::from("Counter - Iced")
+        String::from("Modali")
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
@@ -96,86 +75,33 @@ impl Application for Counter {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::IcedEvent(event) => {
-                println!("hello {event:?}");
-                Command::none()
+            Message::IcedEvent(Event::Keyboard(key_event)) => {
+                input::handle_keyboard_input(key_event)
             }
-            Message::IncrementPressed => {
-                self.value += 1;
-                Command::none()
-            }
-            Message::DecrementPressed => {
-                self.value -= 1;
-                Command::none()
-            }
-            Message::TextInput(text) => {
-                self.text = text;
-                Command::none()
-            }
-
-            Message::Direction(direction) => match direction {
-                WindowDirection::Left => Command::done(Message::AnchorSizeChange(
-                    Anchor::Left | Anchor::Top | Anchor::Bottom,
-                    (400, 0),
-                )),
-                WindowDirection::Right => Command::done(Message::AnchorSizeChange(
-                    Anchor::Right | Anchor::Top | Anchor::Bottom,
-                    (400, 0),
-                )),
-                WindowDirection::Bottom => Command::done(Message::AnchorSizeChange(
-                    Anchor::Bottom | Anchor::Left | Anchor::Right,
-                    (0, 400),
-                )),
-                WindowDirection::Top => Command::done(Message::AnchorSizeChange(
-                    Anchor::Top | Anchor::Left | Anchor::Right,
-                    (0, 400),
-                )),
-                WindowDirection::Center => Command::done(Message::AnchorSizeChange(
-                    Anchor::Top | Anchor::Bottom | Anchor::Left | Anchor::Right,
-                    (400, 400),
-                )),
-            },
-            _ => unreachable!(),
+            _ => Command::none(),
         }
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let center = column![
-            button("Increment").on_press(Message::IncrementPressed),
-            text(self.value).size(50),
-            button("Decrement").on_press(Message::DecrementPressed),
-            button("Center").on_press(Message::Direction(WindowDirection::Center))
-        ]
-        .align_x(Alignment::Center)
-        .padding(20)
-        .width(Length::Fill)
-        .height(Length::Fill);
-        row![
-            button("left")
-                .on_press(Message::Direction(WindowDirection::Left))
-                .height(Length::Fill),
-            column![
-                button("top")
-                    .on_press(Message::Direction(WindowDirection::Top))
-                    .width(Length::Fill),
-                center,
-                text_input("hello", &self.text)
-                    .on_input(Message::TextInput)
-                    .padding(10),
-                button("bottom")
-                    .on_press(Message::Direction(WindowDirection::Bottom))
-                    .width(Length::Fill),
-            ]
-            .width(Length::Fill),
-            button("right")
-                .on_press(Message::Direction(WindowDirection::Right))
-                .height(Length::Fill),
-        ]
-        .padding(20)
-        .spacing(10)
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .into()
+        let mut col0 = Column::new();
+        let mut col1 = Column::new();
+        let mut col2 = Column::new();
+
+        // for (i, label) in self.
+
+        // let center = column![text("hello").size(50),]
+        //     .align_x(Alignment::Center)
+        //     .padding(20)
+        //     .width(Length::Fill)
+        //     .height(Length::Fill);
+
+        let main = row![col0, col1, col2]
+            .padding(20)
+            .spacing(10)
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        container(main).style(main_container_style()).into()
     }
 
     fn style(&self, theme: &Self::Theme) -> iced_layershell::Appearance {
@@ -187,16 +113,15 @@ impl Application for Counter {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-
-    #[test]
-    fn test_load_config_file() {
-        let contents = fs::read_to_string("bindings.json").unwrap();
-        let config: Vec<Action> = serde_json::from_str(&contents).unwrap();
-        let json = serde_json::to_string_pretty(&config).unwrap();
-        insta::assert_snapshot!(json)
-    }
+fn main_container_style<'a>() -> iced::widget::container::StyleFn<'a, Theme> {
+    Box::new(|_| iced::widget::container::Style {
+        border: iced::Border {
+            color: Color::from_rgb8(0, 0, 0),
+            width: 2.0,
+            radius: iced::border::Radius::new(10.0),
+        },
+        background: Some(iced::Background::Color(Color::from_rgba8(22, 22, 29, 0.9))),
+        text_color: Some(Color::from_rgb8(220, 215, 186)),
+        ..Default::default()
+    })
 }
