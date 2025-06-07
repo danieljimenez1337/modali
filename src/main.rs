@@ -1,7 +1,7 @@
 use iced::widget::{button, column, row, text, text_input};
 use iced::{Alignment, Color, Element, Event, Length, Task as Command, Theme, event};
 use iced_layershell::Application;
-use iced_layershell::reexport::Anchor;
+use iced_layershell::reexport::{Anchor, Layer};
 use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
 use iced_layershell::to_layer_message;
 use serde::{Deserialize, Serialize};
@@ -32,10 +32,11 @@ pub fn main() -> Result<(), iced_layershell::Error> {
 
     Counter::run(Settings {
         layer_settings: LayerShellSettings {
-            size: Some((0, 400)),
-            exclusive_zone: 400,
-            anchor: Anchor::Bottom | Anchor::Left | Anchor::Right,
+            size: Some((400, 400)),
+            exclusive_zone: 0,
+            anchor: Anchor::Top | Anchor::Bottom | Anchor::Left | Anchor::Right,
             start_mode,
+            layer: Layer::Overlay,
             ..Default::default()
         },
         ..Default::default()
@@ -53,6 +54,7 @@ enum WindowDirection {
     Left,
     Right,
     Bottom,
+    Center,
 }
 
 // Because new iced delete the custom command, so now we make a macro crate to generate
@@ -128,6 +130,10 @@ impl Application for Counter {
                     Anchor::Top | Anchor::Left | Anchor::Right,
                     (0, 400),
                 )),
+                WindowDirection::Center => Command::done(Message::AnchorSizeChange(
+                    Anchor::Top | Anchor::Bottom | Anchor::Left | Anchor::Right,
+                    (400, 400),
+                )),
             },
             _ => unreachable!(),
         }
@@ -137,7 +143,8 @@ impl Application for Counter {
         let center = column![
             button("Increment").on_press(Message::IncrementPressed),
             text(self.value).size(50),
-            button("Decrement").on_press(Message::DecrementPressed)
+            button("Decrement").on_press(Message::DecrementPressed),
+            button("Center").on_press(Message::Direction(WindowDirection::Center))
         ]
         .align_x(Alignment::Center)
         .padding(20)
