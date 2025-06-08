@@ -87,7 +87,7 @@ impl Application for Modali {
         let mut col1 = Column::new();
         let mut col2 = Column::new();
 
-        let children = match parser::search_which_tree(Rc::clone(&self.whichtree), &self.buffer) {
+        let children = match parser::search_which_tree(&self.whichtree, &self.buffer) {
             Some(x) => match &x.kind {
                 WhichTreeKind::Command(_) => &Vec::new(),
                 WhichTreeKind::Children(x) => &x.clone(),

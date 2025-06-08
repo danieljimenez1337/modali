@@ -1,5 +1,4 @@
 use iced_runtime::Action;
-use std::rc::Rc;
 
 use iced::{
     Task as Command,
@@ -32,7 +31,7 @@ pub fn handle_keyboard_input(
 
                 state.buffer.push_str(&key);
 
-                match parser::search_which_tree(Rc::clone(&state.whichtree), &state.buffer) {
+                match parser::search_which_tree(&state.whichtree, &state.buffer) {
                     Some(x) => match &x.kind {
                         WhichTreeKind::Command(cmd) => {
                             util::run_command_detached(cmd);

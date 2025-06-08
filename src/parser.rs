@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -19,7 +17,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn to_tree_node(&self) -> Rc<WhichTreeNode> {
+    pub fn to_tree_node(&self) -> WhichTreeNode {
         match self {
             Action::SubAction {
                 key,
@@ -31,11 +29,11 @@ impl Action {
                     .iter()
                     .map(|action| action.to_tree_node())
                     .collect();
-                Rc::new(WhichTreeNode {
+                WhichTreeNode {
                     key: Some(parse_char(key)),
                     label,
                     kind: WhichTreeKind::Children(children),
-                })
+                }
             }
             Action::KeyAction {
                 key,
@@ -43,11 +41,11 @@ impl Action {
                 command,
             } => {
                 let label = format!("{key}: {description}");
-                Rc::new(WhichTreeNode {
+                WhichTreeNode {
                     key: Some(parse_char(key)),
                     label,
                     kind: WhichTreeKind::Command(command.clone()),
-                })
+                }
             }
         }
     }
@@ -79,10 +77,10 @@ pub struct WhichTreeNode {
 #[derive(Clone)]
 pub enum WhichTreeKind {
     Command(String),
-    Children(Vec<Rc<WhichTreeNode>>),
+    Children(Vec<WhichTreeNode>),
 }
 
-pub fn search_which_tree(tree: Rc<WhichTreeNode>, s: &str) -> Option<Rc<WhichTreeNode>> {
+pub fn search_which_tree<'a>(tree: &'a WhichTreeNode, s: &str) -> Option<&'a WhichTreeNode> {
     assert!(
         matches!(tree.kind, WhichTreeKind::Children(_)),
         "This function only takes head node"
@@ -90,20 +88,20 @@ pub fn search_which_tree(tree: Rc<WhichTreeNode>, s: &str) -> Option<Rc<WhichTre
     assert!(tree.key.is_none(), "This function only takes head node");
 
     if s.is_empty() {
-        return Some(Rc::clone(&tree));
+        return Some(tree);
     }
 
     let chars: Vec<char> = s.chars().collect();
     search_recursive(tree, &chars, 0)
 }
 
-fn search_recursive(
-    node: Rc<WhichTreeNode>,
+fn search_recursive<'a>(
+    node: &'a WhichTreeNode,
     chars: &[char],
     index: usize,
-) -> Option<Rc<WhichTreeNode>> {
+) -> Option<&'a WhichTreeNode> {
     if index >= chars.len() {
-        return Some(node.clone());
+        return Some(node);
     }
 
     let current_char = chars[index];
@@ -114,10 +112,10 @@ fn search_recursive(
             .find(|child| child.key == Some(current_char))
         {
             match &child.kind {
-                WhichTreeKind::Children(_) => search_recursive(Rc::clone(child), chars, index + 1),
+                WhichTreeKind::Children(_) => search_recursive(child, chars, index + 1),
                 WhichTreeKind::Command(_) => {
                     if index == chars.len() - 1 {
-                        Some(child.clone())
+                        Some(child)
                     } else {
                         None
                     }
