@@ -19,14 +19,14 @@
 			{
 				"type": "KeyAction",
 				"key": "r",
-				"description": "Open Rofi",
-				"command": "rofi -show drun"
+				"description": "Open fire fox Rofi",
+				"command": "firefox -show drun"
 			},
 			{
 				"type": "KeyAction",
 				"key": "g",
-				"description": "Go to Google",
-				"command": "xdg-open https://google.com"
+				"description": "Go to fire Google",
+				"command": "firefox xdg-open https://google.com"
 			}
 		]
 	}

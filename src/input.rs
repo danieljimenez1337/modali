@@ -3,23 +3,38 @@ use iced::{
     keyboard::{self, Modifiers},
 };
 
+use crate::parser::{self, WhichTreeKind};
+
 pub fn handle_keyboard_input(
     state: &mut super::Modali,
     key_event: keyboard::Event,
 ) -> Command<super::Message> {
     match key_event {
-        iced::keyboard::Event::KeyReleased {
-            key,
-            location,
-            modifiers,
-        } => match key {
+        iced::keyboard::Event::KeyReleased { key, modifiers, .. } => match key {
             keyboard::Key::Named(iced::keyboard::key::Named::Escape) => iced::exit(),
             keyboard::Key::Named(iced::keyboard::key::Named::Backspace) => {
-                state.state.pop();
+                state.buffer.pop();
                 Command::none()
             }
             keyboard::Key::Character(c) => {
-                todo!()
+                let key = match modifiers {
+                    Modifiers::SHIFT => c.to_uppercase(),
+                    _ => c.to_string(),
+                };
+
+                state.buffer.push_str(&key);
+                println!("Buffer: {}", state.buffer);
+
+                match parser::search_which_tree(&state.whichtree, &state.buffer) {
+                    Some(x) => match x.kind {
+                        WhichTreeKind::Command(x) => {
+                            println!("Ran Command: {x}");
+                            iced::exit()
+                        }
+                        WhichTreeKind::Children(_) => Command::none(),
+                    },
+                    None => Command::none(),
+                }
             }
             _ => Command::none(),
         },

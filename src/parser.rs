@@ -30,7 +30,7 @@ impl Action {
                     .map(|action| action.to_tree_node())
                     .collect();
                 WhichTreeNode {
-                    key: parse_char(key),
+                    key: Some(parse_char(key)),
                     label,
                     kind: WhichTreeKind::Children(children),
                 }
@@ -42,7 +42,7 @@ impl Action {
             } => {
                 let label = format!("{key}: {description}");
                 WhichTreeNode {
-                    key: parse_char(key),
+                    key: Some(parse_char(key)),
                     label,
                     kind: WhichTreeKind::Command(command.clone()),
                 }
@@ -51,8 +51,13 @@ impl Action {
     }
 }
 
-pub fn actions_to_tree(actions: &[Action]) -> Vec<WhichTreeNode> {
-    actions.iter().map(|a| a.to_tree_node()).collect()
+pub fn actions_to_tree(actions: &[Action]) -> WhichTreeNode {
+    let children = actions.iter().map(|a| a.to_tree_node()).collect();
+    WhichTreeNode {
+        key: None,
+        label: "".to_string(),
+        kind: WhichTreeKind::Children(children),
+    }
 }
 
 fn parse_char(s: &str) -> char {
@@ -64,7 +69,7 @@ fn parse_char(s: &str) -> char {
 
 #[derive(Clone)]
 pub struct WhichTreeNode {
-    pub key: char,
+    pub key: Option<char>,
     pub label: String,
     pub kind: WhichTreeKind,
 }
@@ -75,35 +80,47 @@ pub enum WhichTreeKind {
     Children(Vec<WhichTreeNode>),
 }
 
-pub fn search_which_tree(tree: &[WhichTreeNode], s: String) -> Option<WhichTreeNode> {
+pub fn search_which_tree(tree: &WhichTreeNode, s: &String) -> Option<WhichTreeNode> {
+    assert!(
+        matches!(tree.kind, WhichTreeKind::Children(_)),
+        "This function only takes head node"
+    );
+    assert!(tree.key.is_none(), "This function only takes head node");
+
+    if s.is_empty() {
+        return Some(tree.clone());
+    }
+
     let chars: Vec<char> = s.chars().collect();
     search_recursive(tree, &chars, 0)
 }
 
-fn search_recursive(
-    nodes: &[WhichTreeNode],
-    chars: &[char],
-    index: usize,
-) -> Option<WhichTreeNode> {
+fn search_recursive(node: &WhichTreeNode, chars: &[char], index: usize) -> Option<WhichTreeNode> {
     if index >= chars.len() {
-        return nodes
-            .iter()
-            .find(|node| matches!(node.kind, WhichTreeKind::Command(_)))
-            .cloned();
+        return Some(node.clone());
     }
 
     let current_char = chars[index];
 
-    if let Some(node) = nodes.iter().find(|node| node.key == current_char) {
-        match &node.kind {
-            WhichTreeKind::Command(_) => {
-                if index == chars.len() - 1 {
-                    Some(node.clone())
-                } else {
-                    None
+    // Get children from current node
+    if let WhichTreeKind::Children(children) = &node.kind {
+        if let Some(child) = children
+            .iter()
+            .find(|child| child.key == Some(current_char))
+        {
+            match &child.kind {
+                WhichTreeKind::Children(_) => search_recursive(child, chars, index + 1),
+                WhichTreeKind::Command(_) => {
+                    if index == chars.len() - 1 {
+                        Some(child.clone())
+                    } else {
+                        // More characters left, but no children to continue
+                        None
+                    }
                 }
             }
-            WhichTreeKind::Children(children) => search_recursive(children, chars, index + 1),
+        } else {
+            None
         }
     } else {
         None

@@ -33,8 +33,8 @@ pub fn main() -> Result<(), iced_layershell::Error> {
 }
 
 struct Modali {
-    state: String,
-    whichtree: Vec<parser::WhichTreeNode>,
+    buffer: String,
+    whichtree: parser::WhichTreeNode,
 }
 
 // Because new iced delete the custom command, so now we make a macro crate to generate
@@ -58,7 +58,7 @@ impl Application for Modali {
         let whichtree = parser::actions_to_tree(&actions);
         (
             Self {
-                state: "".to_owned(),
+                buffer: "".to_owned(),
                 whichtree,
             },
             Command::none(),
@@ -87,18 +87,15 @@ impl Application for Modali {
         let mut col1 = Column::new();
         let mut col2 = Column::new();
 
-        let tree = match self.state.len() {
-            0 => self.whichtree.clone(),
-            _ => match parser::search_which_tree(&self.whichtree, self.state.clone()) {
-                Some(x) => match x.kind {
-                    WhichTreeKind::Command(_) => Vec::new(),
-                    WhichTreeKind::Children(x) => x.clone(),
-                },
-                None => Vec::new(),
+        let children = match parser::search_which_tree(&self.whichtree.clone(), &self.buffer) {
+            Some(x) => match x.kind {
+                WhichTreeKind::Command(_) => &Vec::new(),
+                WhichTreeKind::Children(x) => &x.clone(),
             },
+            None => &Vec::new(),
         };
 
-        for (i, tree_node) in tree.iter().enumerate() {
+        for (i, tree_node) in children.iter().enumerate() {
             let col_num = i % 3;
             let label = tree_node.label.clone();
             match col_num {
