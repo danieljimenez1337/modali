@@ -3,7 +3,10 @@ use iced::{
     keyboard::{self, Modifiers},
 };
 
-use crate::parser::{self, WhichTreeKind};
+use crate::{
+    parser::{self, WhichTreeKind},
+    util,
+};
 
 pub fn handle_keyboard_input(
     state: &mut super::Modali,
@@ -23,17 +26,19 @@ pub fn handle_keyboard_input(
                 };
 
                 state.buffer.push_str(&key);
-                println!("Buffer: {}", state.buffer);
 
                 match parser::search_which_tree(&state.whichtree, &state.buffer) {
                     Some(x) => match x.kind {
-                        WhichTreeKind::Command(x) => {
-                            println!("Ran Command: {x}");
+                        WhichTreeKind::Command(cmd) => {
+                            util::run_command_detached(cmd);
                             iced::exit()
                         }
                         WhichTreeKind::Children(_) => Command::none(),
                     },
-                    None => Command::none(),
+                    None => {
+                        state.buffer.pop();
+                        Command::none()
+                    }
                 }
             }
             _ => Command::none(),
@@ -41,7 +46,3 @@ pub fn handle_keyboard_input(
         _ => Command::none(),
     }
 }
-
-// fn combine_char_modifier(c: SmolStr, modifiers: Modifiers) -> String {
-//     todo!()
-// }

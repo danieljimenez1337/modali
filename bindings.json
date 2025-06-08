@@ -18,15 +18,15 @@
 		"sub_actions": [
 			{
 				"type": "KeyAction",
-				"key": "r",
-				"description": "Open fire fox Rofi",
-				"command": "firefox -show drun"
+				"key": "f",
+				"description": "Launch Firefox",
+				"command": "firefox"
 			},
 			{
 				"type": "KeyAction",
-				"key": "g",
-				"description": "Go to fire Google",
-				"command": "firefox xdg-open https://google.com"
+				"key": "e",
+				"description": "Edit this config",
+				"command": "xdg-open bindings.json"
 			}
 		]
 	}

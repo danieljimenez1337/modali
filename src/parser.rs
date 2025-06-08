@@ -80,7 +80,7 @@ pub enum WhichTreeKind {
     Children(Vec<WhichTreeNode>),
 }
 
-pub fn search_which_tree(tree: &WhichTreeNode, s: &String) -> Option<WhichTreeNode> {
+pub fn search_which_tree(tree: &WhichTreeNode, s: &str) -> Option<WhichTreeNode> {
     assert!(
         matches!(tree.kind, WhichTreeKind::Children(_)),
         "This function only takes head node"
@@ -102,7 +102,6 @@ fn search_recursive(node: &WhichTreeNode, chars: &[char], index: usize) -> Optio
 
     let current_char = chars[index];
 
-    // Get children from current node
     if let WhichTreeKind::Children(children) = &node.kind {
         if let Some(child) = children
             .iter()
@@ -114,7 +113,6 @@ fn search_recursive(node: &WhichTreeNode, chars: &[char], index: usize) -> Optio
                     if index == chars.len() - 1 {
                         Some(child.clone())
                     } else {
-                        // More characters left, but no children to continue
                         None
                     }
                 }
