@@ -1,6 +1,6 @@
 use std::process::Command;
 
-pub fn run_command_detached(cmd: String) {
+pub fn run_command_detached(cmd: &str) {
     Command::new("sh")
         .arg("-c")
         .arg(format!(

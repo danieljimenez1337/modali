@@ -1,4 +1,5 @@
 use std::fs;
+use std::rc::Rc;
 
 use iced::widget::{Column, container, row, text};
 use iced::{Alignment, Color, Element, Event, Length, Task as Command, Theme, event};
@@ -34,11 +35,9 @@ pub fn main() -> Result<(), iced_layershell::Error> {
 
 struct Modali {
     buffer: String,
-    whichtree: parser::WhichTreeNode,
+    whichtree: Rc<parser::WhichTreeNode>,
 }
 
-// Because new iced delete the custom command, so now we make a macro crate to generate
-// the Command
 #[to_layer_message]
 #[derive(Debug, Clone)]
 #[doc = "Some docs"]
@@ -56,10 +55,11 @@ impl Application for Modali {
         let contents = fs::read_to_string("bindings.json").unwrap();
         let actions: Vec<parser::Action> = serde_json::from_str(&contents).unwrap();
         let whichtree = parser::actions_to_tree(&actions);
+        let ref_whichtree = Rc::new(whichtree);
         (
             Self {
                 buffer: "".to_owned(),
-                whichtree,
+                whichtree: ref_whichtree,
             },
             Command::none(),
         )
@@ -87,8 +87,8 @@ impl Application for Modali {
         let mut col1 = Column::new();
         let mut col2 = Column::new();
 
-        let children = match parser::search_which_tree(&self.whichtree.clone(), &self.buffer) {
-            Some(x) => match x.kind {
+        let children = match parser::search_which_tree(Rc::clone(&self.whichtree), &self.buffer) {
+            Some(x) => match &x.kind {
                 WhichTreeKind::Command(_) => &Vec::new(),
                 WhichTreeKind::Children(x) => &x.clone(),
             },
