@@ -1,3 +1,4 @@
+use iced_runtime::Action;
 use std::rc::Rc;
 
 use iced::{
@@ -16,7 +17,9 @@ pub fn handle_keyboard_input(
 ) -> Command<super::Message> {
     match key_event {
         iced::keyboard::Event::KeyReleased { key, modifiers, .. } => match key {
-            keyboard::Key::Named(iced::keyboard::key::Named::Escape) => iced::exit(),
+            keyboard::Key::Named(iced::keyboard::key::Named::Escape) => {
+                iced_runtime::task::effect(Action::Exit)
+            }
             keyboard::Key::Named(iced::keyboard::key::Named::Backspace) => {
                 state.buffer.pop();
                 Command::none()
@@ -33,7 +36,7 @@ pub fn handle_keyboard_input(
                     Some(x) => match &x.kind {
                         WhichTreeKind::Command(cmd) => {
                             util::run_command_detached(cmd);
-                            iced::exit()
+                            iced_runtime::task::effect(Action::Exit)
                         }
                         WhichTreeKind::Children(_) => Command::none(),
                     },

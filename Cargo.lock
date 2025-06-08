@@ -1953,6 +1953,7 @@ version = "0.1.0"
 dependencies = [
  "iced",
  "iced_layershell",
+ "iced_runtime",
  "insta",
  "serde",
  "serde_json",
