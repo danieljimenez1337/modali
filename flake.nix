@@ -5,56 +5,86 @@
     nixpkgs.url = "nixpkgs/nixos-25.05";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
     self,
     nixpkgs,
     home-manager,
+    rust-overlay,
     ...
   }: let
     system = "x86_64-linux"; # Or your target system
-    pkgs = nixpkgs.legacyPackages.${system};
+    overlays = [ (import rust-overlay) ];
+    pkgs = import nixpkgs {
+      inherit system overlays;
+    };
   in {
-    packages.${system}.default = pkgs.stdenv.mkDerivation rec {
+    packages.${system}.default = pkgs.rustPlatform.buildRustPackage rec {
       pname = "modali";
       version = "0.1.0";
 
       src = ./.; # Use the current directory as the source
 
-      nativeBuildInputs = [
-        pkgs.gcc
-        pkgs.pkg-config
+      cargoLock = {
+        lockFile = ./Cargo.lock;
+      };
+
+      nativeBuildInputs = with pkgs; [
+        pkg-config
+        rust-bin.nightly.latest.default
       ];
 
-      buildInputs = [
-        pkgs.gtk4
-        pkgs.json-glib
-        # Dependencies like glib, cairo, pango, gdk-pixbuf, libxkbcommon, wayland
+      buildInputs = with pkgs; [
+        gtk4
+        json-glib
+        wayland
+        libxkbcommon
+        vulkan-loader
+        # Dependencies like glib, cairo, pango, gdk-pixbuf
         # are pulled in automatically by gtk4 and json-glib.
       ];
 
-      buildPhase = ''
-        runHook preBuild
-        gcc $NIX_CFLAGS_COMPILE main.c -o modali $(pkg-config --cflags --libs gtk4 gio-2.0 json-glib-1.0)
-        runHook postBuild
-      '';
-
-      installPhase = ''
-        runHook preInstall
-        mkdir -p $out/bin
+      # Set environment variables for Wayland and Vulkan
+      postInstall = ''
         mkdir -p $out/share/modali
-
-        cp modali $out/bin/
-        cp bindings.json $out/share/modali/ # Default bindings
-        cp style.css $out/share/modali/
-        runHook postInstall
+        cp -f bindings.json $out/share/modali/ 2>/dev/null || true
+        cp -f style.css $out/share/modali/ 2>/dev/null || true
       '';
+
+      meta = with pkgs.lib; {
+        description = "A GTK4 Vim-like application launcher";
+        homepage = "https://github.com/your-username/modali";
+        license = licenses.mit; # Adjust as needed
+        maintainers = [];
+        platforms = platforms.linux;
+      };
     };
 
     apps.${system}.default = {
       type = "app";
       program = "${self.packages.${system}.default}/bin/modali";
+    };
+
+    devShells.${system}.default = pkgs.mkShell {
+      buildInputs = with pkgs; [
+        rust-bin.nightly.latest.default
+        pkg-config
+        gtk4
+        json-glib
+        wayland
+        libxkbcommon
+        vulkan-loader
+        cargo-insta
+      ];
+
+      LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+        pkgs.wayland
+        pkgs.vulkan-loader
+        pkgs.libxkbcommon
+      ];
     };
 
     homeManagerModules.default = {
