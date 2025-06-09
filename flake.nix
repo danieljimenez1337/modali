@@ -48,11 +48,7 @@
       ];
 
       # Set environment variables for Wayland and Vulkan
-      postInstall = ''
-        mkdir -p $out/share/modali
-        cp -f bindings.json $out/share/modali/ 2>/dev/null || true
-        cp -f style.css $out/share/modali/ 2>/dev/null || true
-      '';
+
 
       meta = with pkgs.lib; {
         description = "A GTK4 Vim-like application launcher";

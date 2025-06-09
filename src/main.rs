@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use iced::widget::{Column, container, row, text};
@@ -45,6 +46,37 @@ enum Message {
     IcedEvent(Event),
 }
 
+impl Modali {
+    fn find_bindings_file() -> Result<PathBuf, String> {
+        if cfg!(debug_assertions) {
+            let local_config = PathBuf::from("bindings.json");
+            if local_config.exists() {
+                return Ok(local_config);
+            }
+        }
+
+        let Some(config_dir) = dirs::config_dir() else {
+            return Err("Could not determine XDG config directory".to_string());
+        };
+
+        let xdg_config = config_dir.join("modali").join("bindings.json");
+
+        if !xdg_config.exists() {
+            let error_msg = if cfg!(debug_assertions) {
+                format!(
+                    "Could not find bindings.json in current directory or at {}",
+                    xdg_config.display()
+                )
+            } else {
+                format!("Could not find bindings.json at {}", xdg_config.display())
+            };
+            return Err(error_msg);
+        }
+
+        Ok(xdg_config)
+    }
+}
+
 impl Application for Modali {
     type Message = Message;
     type Flags = ();
@@ -52,8 +84,10 @@ impl Application for Modali {
     type Executor = iced::executor::Default;
 
     fn new(_flags: ()) -> (Self, Command<Message>) {
-        let contents = fs::read_to_string("bindings.json").unwrap();
-        let actions: Vec<parser::Action> = serde_json::from_str(&contents).unwrap();
+        let bindings_path = Self::find_bindings_file().expect("Failed to find bindings.json");
+        let contents = fs::read_to_string(bindings_path).expect("Failed to read bindings.json");
+        let actions: Vec<parser::Action> =
+            serde_json::from_str(&contents).expect("Failed to parse bindings.json");
         let whichtree = parser::actions_to_tree(&actions);
         let ref_whichtree = Rc::new(whichtree);
         (
