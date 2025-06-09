@@ -40,11 +40,14 @@
       buildInputs = with pkgs; [
         gtk4
         json-glib
-        wayland
         libxkbcommon
         vulkan-loader
         # Dependencies like glib, cairo, pango, gdk-pixbuf
         # are pulled in automatically by gtk4 and json-glib.
+      ];
+
+      propagatedBuildInputs = with pkgs; [
+        wayland
       ];
 
       # Set environment variables for Wayland and Vulkan
