@@ -1,6 +1,5 @@
 {
   description = "A GTK4 Vim-like application launcher";
-
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-25.05";
     home-manager.url = "github:nix-community/home-manager";
@@ -8,7 +7,6 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
-
   outputs = {
     self,
     nixpkgs,
@@ -16,7 +14,7 @@
     rust-overlay,
     ...
   }: let
-    system = "x86_64-linux"; # Or your target system
+    system = "x86_64-linux";
     overlays = [ (import rust-overlay) ];
     pkgs = import nixpkgs {
       inherit system overlays;
@@ -25,38 +23,33 @@
     packages.${system}.default = pkgs.rustPlatform.buildRustPackage rec {
       pname = "modali";
       version = "0.1.0";
-
-      src = ./.; # Use the current directory as the source
-
+      src = ./.;
       cargoLock = {
         lockFile = ./Cargo.lock;
       };
-
       nativeBuildInputs = with pkgs; [
         pkg-config
         rust-bin.nightly.latest.default
+        makeWrapper  # Add this for wrapping the binary
       ];
-
       buildInputs = with pkgs; [
         gtk4
         json-glib
         libxkbcommon
         vulkan-loader
-        # Dependencies like glib, cairo, pango, gdk-pixbuf
-        # are pulled in automatically by gtk4 and json-glib.
+        wayland  # Runtime library needed for iced_layershell
       ];
 
-      propagatedBuildInputs = with pkgs; [
-        wayland
-      ];
-
-      # Set environment variables for Wayland and Vulkan
-
+      # Wrap the binary to set LD_LIBRARY_PATH for Wayland
+      postInstall = ''
+        wrapProgram $out/bin/modali \
+          --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [ pkgs.wayland pkgs.libxkbcommon pkgs.vulkan-loader ]}
+      '';
 
       meta = with pkgs.lib; {
         description = "A GTK4 Vim-like application launcher";
         homepage = "https://github.com/your-username/modali";
-        license = licenses.mit; # Adjust as needed
+        license = licenses.mit;
         maintainers = [];
         platforms = platforms.linux;
       };
@@ -74,11 +67,11 @@
         gtk4
         json-glib
         wayland
+        wayland.dev  # Add the development headers
         libxkbcommon
         vulkan-loader
         cargo-insta
       ];
-
       LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
         pkgs.wayland
         pkgs.vulkan-loader
@@ -103,7 +96,6 @@
           description = "Keybindings for Modali, as a list of attribute sets.";
         };
       };
-
       config = lib.mkIf cfg.enable {
         home.packages = [modaliPackage];
         xdg.configFile."modali/bindings.json".text = builtins.toJSON cfg.keybindings;
