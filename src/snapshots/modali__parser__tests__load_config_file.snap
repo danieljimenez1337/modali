@@ -5,33 +5,296 @@ expression: json
 [
   {
     "type": "KeyAction",
-    "key": "r",
-    "description": "Open Rofi",
-    "command": "rofi -show drun"
+    "key": "t",
+    "description": "Terminal (Kitty)",
+    "command": "kitty"
   },
   {
     "type": "KeyAction",
-    "key": "g",
-    "description": "Go to Google",
-    "command": "xdg-open https://google.com"
+    "key": "f",
+    "description": "Firefox",
+    "command": "firefox"
+  },
+  {
+    "type": "KeyAction",
+    "key": "e",
+    "description": "File Explorer",
+    "command": "thunar"
+  },
+  {
+    "type": "KeyAction",
+    "key": "c",
+    "description": "VS Code",
+    "command": "code"
   },
   {
     "type": "SubAction",
-    "key": "f",
-    "description": "Firefox options...",
+    "key": "s",
+    "description": "System",
     "sub_actions": [
       {
         "type": "KeyAction",
-        "key": "f",
-        "description": "Launch Firefox",
-        "command": "firefox"
+        "key": "l",
+        "description": "Lock Screen",
+        "command": "swaylock"
+      },
+      {
+        "type": "KeyAction",
+        "key": "r",
+        "description": "Reboot",
+        "command": "systemctl reboot"
+      },
+      {
+        "type": "KeyAction",
+        "key": "s",
+        "description": "Shutdown",
+        "command": "systemctl poweroff"
       },
       {
         "type": "KeyAction",
         "key": "e",
-        "description": "Edit this config",
-        "command": "xdg-open bindings.json"
+        "description": "Exit Hyprland",
+        "command": "hyprctl dispatch exit"
+      },
+      {
+        "type": "KeyAction",
+        "key": "p",
+        "description": "Suspend",
+        "command": "systemctl suspend"
       }
     ]
+  },
+  {
+    "type": "SubAction",
+    "key": "h",
+    "description": "Hyprland",
+    "sub_actions": [
+      {
+        "type": "KeyAction",
+        "key": "r",
+        "description": "Reload Config",
+        "command": "hyprctl reload"
+      },
+      {
+        "type": "KeyAction",
+        "key": "c",
+        "description": "Edit Hyprland Config",
+        "command": "code ~/.config/hypr/hyprland.conf"
+      },
+      {
+        "type": "KeyAction",
+        "key": "s",
+        "description": "Take Screenshot",
+        "command": "grimblast copy area"
+      },
+      {
+        "type": "KeyAction",
+        "key": "w",
+        "description": "Screenshot Window",
+        "command": "grimblast copy active"
+      },
+      {
+        "type": "KeyAction",
+        "key": "m",
+        "description": "Toggle Monitor Off",
+        "command": "hyprctl dispatch dpms off"
+      }
+    ]
+  },
+  {
+    "type": "SubAction",
+    "key": "a",
+    "description": "Applications",
+    "sub_actions": [
+      {
+        "type": "KeyAction",
+        "key": "b",
+        "description": "Brave Browser",
+        "command": "brave-browser"
+      },
+      {
+        "type": "KeyAction",
+        "key": "d",
+        "description": "Discord",
+        "command": "discord"
+      },
+      {
+        "type": "KeyAction",
+        "key": "s",
+        "description": "Spotify",
+        "command": "spotify"
+      },
+      {
+        "type": "KeyAction",
+        "key": "v",
+        "description": "VLC",
+        "command": "vlc"
+      },
+      {
+        "type": "KeyAction",
+        "key": "o",
+        "description": "LibreOffice",
+        "command": "libreoffice"
+      },
+      {
+        "type": "KeyAction",
+        "key": "g",
+        "description": "GIMP",
+        "command": "gimp"
+      }
+    ]
+  },
+  {
+    "type": "SubAction",
+    "key": "w",
+    "description": "Workspace",
+    "sub_actions": [
+      {
+        "type": "KeyAction",
+        "key": "1",
+        "description": "Workspace 1",
+        "command": "hyprctl dispatch workspace 1"
+      },
+      {
+        "type": "KeyAction",
+        "key": "2",
+        "description": "Workspace 2",
+        "command": "hyprctl dispatch workspace 2"
+      },
+      {
+        "type": "KeyAction",
+        "key": "3",
+        "description": "Workspace 3",
+        "command": "hyprctl dispatch workspace 3"
+      },
+      {
+        "type": "KeyAction",
+        "key": "4",
+        "description": "Workspace 4",
+        "command": "hyprctl dispatch workspace 4"
+      },
+      {
+        "type": "KeyAction",
+        "key": "n",
+        "description": "Next Workspace",
+        "command": "hyprctl dispatch workspace +1"
+      },
+      {
+        "type": "KeyAction",
+        "key": "p",
+        "description": "Previous Workspace",
+        "command": "hyprctl dispatch workspace -1"
+      }
+    ]
+  },
+  {
+    "type": "SubAction",
+    "key": "d",
+    "description": "Development",
+    "sub_actions": [
+      {
+        "type": "KeyAction",
+        "key": "v",
+        "description": "Neovim",
+        "command": "kitty -e nvim"
+      },
+      {
+        "type": "KeyAction",
+        "key": "c",
+        "description": "VS Code",
+        "command": "code"
+      },
+      {
+        "type": "KeyAction",
+        "key": "g",
+        "description": "GitHub Desktop",
+        "command": "github-desktop"
+      },
+      {
+        "type": "KeyAction",
+        "key": "p",
+        "description": "Postman",
+        "command": "postman"
+      },
+      {
+        "type": "KeyAction",
+        "key": "d",
+        "description": "Docker Desktop",
+        "command": "docker-desktop"
+      }
+    ]
+  },
+  {
+    "type": "SubAction",
+    "key": "m",
+    "description": "Media",
+    "sub_actions": [
+      {
+        "type": "KeyAction",
+        "key": "p",
+        "description": "Play/Pause",
+        "command": "playerctl play-pause"
+      },
+      {
+        "type": "KeyAction",
+        "key": "n",
+        "description": "Next",
+        "command": "playerctl next"
+      },
+      {
+        "type": "KeyAction",
+        "key": "b",
+        "description": "Previous",
+        "command": "playerctl previous"
+      },
+      {
+        "type": "KeyAction",
+        "key": "s",
+        "description": "Stop",
+        "command": "playerctl stop"
+      },
+      {
+        "type": "KeyAction",
+        "key": "u",
+        "description": "Volume Up",
+        "command": "pactl set-sink-volume @DEFAULT_SINK@ +5%"
+      },
+      {
+        "type": "KeyAction",
+        "key": "d",
+        "description": "Volume Down",
+        "command": "pactl set-sink-volume @DEFAULT_SINK@ -5%"
+      },
+      {
+        "type": "KeyAction",
+        "key": "m",
+        "description": "Mute",
+        "command": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+      }
+    ]
+  },
+  {
+    "type": "KeyAction",
+    "key": "r",
+    "description": "Run App (Rofi)",
+    "command": "rofi -show drun"
+  },
+  {
+    "type": "KeyAction",
+    "key": "b",
+    "description": "Bluetooth Manager",
+    "command": "blueman-manager"
+  },
+  {
+    "type": "KeyAction",
+    "key": "n",
+    "description": "Network Manager",
+    "command": "nm-connection-editor"
+  },
+  {
+    "type": "KeyAction",
+    "key": "v",
+    "description": "Volume Control",
+    "command": "pavucontrol"
   }
 ]
