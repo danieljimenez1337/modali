@@ -1,5 +1,5 @@
 {
-  description = "A GTK4 Vim-like application launcher";
+  description = "A Vim-like application launcher built with Rust and Iced";
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-25.05";
     home-manager.url = "github:nix-community/home-manager";
@@ -30,11 +30,9 @@
       nativeBuildInputs = with pkgs; [
         pkg-config
         rust-bin.nightly.latest.default
-        makeWrapper  # Add this for wrapping the binary
+        makeWrapper
       ];
       buildInputs = with pkgs; [
-        gtk4
-        json-glib
         libxkbcommon
         vulkan-loader
         wayland  # Runtime library needed for iced_layershell
@@ -47,7 +45,7 @@
       '';
 
       meta = with pkgs.lib; {
-        description = "A GTK4 Vim-like application launcher";
+        description = "A Vim-like application launcher built with Rust and Iced";
         homepage = "https://github.com/your-username/modali";
         license = licenses.mit;
         maintainers = [];
@@ -64,8 +62,6 @@
       buildInputs = with pkgs; [
         rust-bin.nightly.latest.default
         pkg-config
-        gtk4
-        json-glib
         wayland
         wayland.dev  # Add the development headers
         libxkbcommon
