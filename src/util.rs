@@ -1,3 +1,4 @@
+use crate::parser::{self, Action, WhichTreeNode};
 use color_eyre::eyre::{Result, eyre};
 use std::path::PathBuf;
 use std::process::Command;
@@ -27,10 +28,59 @@ fn get_config_dir() -> Result<PathBuf> {
     }
 }
 
-pub fn load_keybindings(file: Option<String>) -> Result<String> {
-    let file_path = match file {
-        Some(x) => PathBuf::from(x),
-        None => get_config_dir()?.join("modali").join("bindings.json"),
+enum Filetype {
+    Json(String),
+    Ron(String),
+}
+
+fn load_config_file(input: Option<String>, name: &str) -> Result<Filetype> {
+    let file_path = match input {
+        Some(x) => {
+            let path = PathBuf::from(&x);
+
+            if path.exists() {
+                Ok(path)
+            } else {
+                Err(eyre!("Input file {x} does not exists"))
+            }
+        }
+        None => {
+            let config_dir = get_config_dir()?.join("modali");
+            let json_dir = config_dir.join(format!("{name}.json"));
+
+            if json_dir.exists() {
+                Ok(json_dir)
+            } else {
+                let ron_dir = config_dir.join(format!("{name}.ron"));
+                if ron_dir.exists() {
+                    Ok(ron_dir)
+                } else {
+                    Err(eyre!("Unable to find {name} file"))
+                }
+            }
+        }
+    }?;
+
+    let contents = fs::read_to_string(&file_path)?;
+    let ext = file_path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .ok_or_else(|| eyre!("File has no valid extension"))?;
+
+    match ext {
+        "json" => Ok(Filetype::Json(contents)),
+        "ron" => Ok(Filetype::Ron(contents)),
+        other => Err(eyre!("File type {} is not supported", other)),
+    }
+}
+
+pub fn load_keybindings(input: Option<String>) -> Result<WhichTreeNode> {
+    let file = load_config_file(input, "bindings")?;
+
+    let actions: Vec<Action> = match file {
+        Filetype::Json(x) => serde_json::from_str(&x)?,
+        Filetype::Ron(x) => ron::from_str(&x)?,
     };
-    Ok(fs::read_to_string(file_path)?)
+
+    Ok(parser::actions_to_tree(&actions))
 }

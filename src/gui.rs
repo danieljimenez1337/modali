@@ -1,6 +1,6 @@
 use crate::input;
 use crate::parser;
-use crate::parser::{Action, WhichTreeKind, WhichTreeNode};
+use crate::parser::{WhichTreeKind, WhichTreeNode};
 use crate::util;
 use iced::widget::{Column, container, row, text};
 use iced::{Alignment, Color, Element, Event, Length, Task as Command, Theme, event};
@@ -25,11 +25,7 @@ impl Application for Modali {
     type Executor = iced::executor::Default;
 
     fn new(flags: super::Args) -> (Self, Command<Message>) {
-        let whichtree = {
-            let contents = util::load_keybindings(flags.input).unwrap();
-            let actions: Vec<Action> = serde_json::from_str(&contents).unwrap();
-            parser::actions_to_tree(&actions)
-        };
+        let whichtree = util::load_keybindings(flags.input).unwrap();
 
         (
             Self {

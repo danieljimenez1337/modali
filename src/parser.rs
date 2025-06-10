@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum Action {
     SubAction {
         key: String,
@@ -131,6 +130,8 @@ fn search_recursive<'a>(
 
 #[cfg(test)]
 mod tests {
+    use ron::ser::PrettyConfig;
+
     use super::*;
     use std::fs;
 
@@ -140,5 +141,14 @@ mod tests {
         let config: Vec<Action> = serde_json::from_str(&contents).unwrap();
         let json = serde_json::to_string_pretty(&config).unwrap();
         insta::assert_snapshot!(json)
+    }
+
+    #[test]
+    fn test_load_ron_binding_file() {
+        let contents = fs::read_to_string("bindings.json").unwrap();
+        let config: Vec<Action> = serde_json::from_str(&contents).unwrap();
+        println!("Got Actions");
+        let ron = ron::ser::to_string_pretty(&config, PrettyConfig::default()).unwrap();
+        insta::assert_snapshot!(ron)
     }
 }

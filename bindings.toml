@@ -1,0 +1,28 @@
+[[actions]]
+type = "KeyAction"
+key = "r"
+description = "Open Rofi"
+command = "rofi -show drun"
+
+[[actions]]
+type = "KeyAction"
+key = "g"
+description = "Go to Google"
+command = "xdg-open https://google.com"
+
+[[actions]]
+type = "SubAction"
+key = "f"
+description = "Firefox options..."
+
+[[actions.sub_actions]]
+type = "KeyAction"
+key = "f"
+description = "Launch Firefox"
+command = "firefox"
+
+[[actions.sub_actions]]
+type = "KeyAction"
+key = "e"
+description = "Edit this config"
+command = "xdg-open bindings.json"
