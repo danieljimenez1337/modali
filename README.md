@@ -1,12 +1,12 @@
 # Modali
 
-A GTK4 Vim-like application launcher built with Rust and Iced.
+A Vim-like application launcher built with Rust and Iced.
 
 ## Features
 
 - **Vim-like keybindings**: Navigate through commands using single key presses
 - **Hierarchical commands**: Organize commands in nested menus
-- **GTK4 + Wayland**: Modern UI with proper Wayland support
+- **Iced + Wayland**: Modern UI with proper Wayland support
 - **XDG compliant**: Follows XDG Base Directory specification
 - **Nix integration**: Easy installation and configuration with Nix and Home Manager
 
@@ -222,7 +222,7 @@ cargo build --release
 - **iced**: Cross-platform GUI framework
 - **iced_layershell**: Wayland layer shell support for Iced
 - **serde**: JSON serialization/deserialization
-- **GTK4**: UI toolkit
+- **Iced**: Cross-platform GUI framework
 - **Wayland**: Display server protocol
 
 ## License
