@@ -1,3 +1,4 @@
+use crate::gui;
 use iced_runtime::Action;
 
 use iced::{
@@ -11,9 +12,9 @@ use crate::{
 };
 
 pub fn handle_keyboard_input(
-    state: &mut super::Modali,
+    state: &mut gui::Modali,
     key_event: keyboard::Event,
-) -> Command<super::Message> {
+) -> Command<gui::Message> {
     match key_event {
         iced::keyboard::Event::KeyReleased { key, modifiers, .. } => match key {
             keyboard::Key::Named(iced::keyboard::key::Named::Escape) => {
@@ -34,7 +35,7 @@ pub fn handle_keyboard_input(
                 match parser::search_which_tree(&state.whichtree, &state.buffer) {
                     Some(x) => match &x.kind {
                         WhichTreeKind::Command(cmd) => {
-                            util::run_command_detached(cmd);
+                            util::run_command_detached(cmd).unwrap();
                             iced_runtime::task::effect(Action::Exit)
                         }
                         WhichTreeKind::Children(_) => Command::none(),

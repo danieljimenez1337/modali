@@ -13,6 +13,7 @@
 
     # Development tools
     cargo-insta
+    just
   ];
 
   env.LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${lib.makeLibraryPath [pkgs.wayland pkgs.vulkan-loader pkgs.libxkbcommon]}";
