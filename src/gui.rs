@@ -58,44 +58,43 @@ impl Application for Modali {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let mut col0 = Column::new();
-        let mut col1 = Column::new();
-        let mut col2 = Column::new();
+        const MAX_ITEMS_PER_COLUMN: usize = 10;
+        const FONT_SIZE: u16 = 22;
 
         let children = match parser::search_which_tree(&self.whichtree, &self.buffer) {
             Some(x) => match &x.kind {
-                WhichTreeKind::Command(_) => &Vec::new(),
-                WhichTreeKind::Children(x) => &x.clone(),
+                WhichTreeKind::Command(_) => Vec::new(),
+                WhichTreeKind::Children(x) => x.clone(),
             },
-            None => &Vec::new(),
+            None => Vec::new(),
         };
 
-        for (i, tree_node) in children.iter().enumerate() {
-            let col_num = i % 3;
-            let label = tree_node.label.clone();
-            match col_num {
-                0 => {
-                    col0 = col0.push(text(label).size(22));
-                }
+        let num_columns = if children.is_empty() {
+            1
+        } else {
+            (children.len() + MAX_ITEMS_PER_COLUMN - 1) / MAX_ITEMS_PER_COLUMN
+        };
 
-                1 => {
-                    col1 = col1.push(text(label).size(22));
-                }
-                2 => {
-                    col2 = col2.push(text(label).size(22));
-                }
-                _ => panic!(),
-            }
+        let mut rows = Vec::new();
+        for i in 0..num_columns {
+            let column_items = children.iter()
+                .skip(i * MAX_ITEMS_PER_COLUMN)
+                .take(MAX_ITEMS_PER_COLUMN)
+                .map(|tree_node| text(tree_node.label.clone()).size(FONT_SIZE))
+                .fold(Column::new(), |column, item| column.push(item));
+
+            rows.push(column_items);
         }
 
-        let main = row![col0, col1, col2].spacing(40);
+        let main_row = rows.into_iter().fold(row!().spacing(40), |row, column| row.push(column));
 
-        container(main)
+        container(main_row)
             .width(Length::Fill)
             .height(Length::Fill)
             .style(main_container_style())
-            .align_x(Alignment::Center)
-            .align_y(Alignment::Center)
+            .align_x(Alignment::Start)
+            .align_y(Alignment::Start)
+            .padding(40)
             .into()
     }
 
