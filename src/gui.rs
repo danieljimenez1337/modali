@@ -52,7 +52,7 @@ impl Application for Modali {
         match message {
             Message::IcedEvent(Event::Keyboard(key_event)) => {
                 if let Some(start) = super::START.get() {
-                    println!("Elapsed: {:.2?}", start.elapsed());
+                    println!("Elapsed: {:.2?} : {:?}", start.elapsed(), key_event);
                 } else {
                     println!("START not initialized.");
                 }
