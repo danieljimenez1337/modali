@@ -51,6 +51,11 @@ impl Application for Modali {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::IcedEvent(Event::Keyboard(key_event)) => {
+                if let Some(start) = super::START.get() {
+                    println!("Elapsed: {:.2?}", start.elapsed());
+                } else {
+                    println!("START not initialized.");
+                }
                 input::handle_keyboard_input(self, key_event)
             }
             _ => Command::none(),

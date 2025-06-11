@@ -5,10 +5,15 @@ use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
 
 use clap::Parser;
 
+use std::sync::OnceLock;
+use std::time::Instant;
+
 mod gui;
 mod input;
 mod parser;
 mod util;
+
+static START: OnceLock<Instant> = OnceLock::new();
 
 #[derive(Parser, Debug, Default)]
 #[command(name = "Modali", about = "Which Like Launcher")]
@@ -27,6 +32,7 @@ pub struct Args {
 }
 
 pub fn main() -> Result<()> {
+    START.set(Instant::now()).ok();
     color_eyre::install()?;
 
     let args = Args::parse();
