@@ -3,6 +3,8 @@
 #include <string.h>  // For strlen, strcmp
 #include <stdlib.h>  // For setenv, realpath
 #include <limits.h>  // For PATH_MAX
+#include <time.h>    // For timing measurements
+#include <sys/time.h> // For gettimeofday
 
 // GLib family
 #include <glib.h>    // For GString, g_get_user_config_dir(), etc.
@@ -14,6 +16,24 @@
 
 // Other libraries
 #include <json-glib/json-glib.h> // For JSON parsing
+
+// --- Timing Globals ---
+static struct timeval app_start_time;
+static gboolean first_input_received = FALSE;
+
+// Helper function to get elapsed time in milliseconds
+static double get_elapsed_ms(struct timeval start) {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return ((now.tv_sec - start.tv_sec) * 1000.0) + 
+           ((now.tv_usec - start.tv_usec) / 1000.0);
+}
+
+// Helper function to print timing milestone
+static void print_timing_milestone(const char* milestone) {
+    double elapsed = get_elapsed_ms(app_start_time);
+    g_print("[TIMING] %s: %.2f ms\n", milestone, elapsed);
+}
 
 // --- Key Binding Structures ---
 typedef struct KeyAction KeyAction;
@@ -135,6 +155,8 @@ static KeyAction* parse_json_array_to_key_actions(JsonArray *array) {
 }
 
 static void load_key_bindings_from_json(const char *filename) {
+    print_timing_milestone("JSON loading started");
+    
     JsonParser *parser = json_parser_new();
     GError *error = NULL;
 
@@ -159,6 +181,7 @@ static void load_key_bindings_from_json(const char *filename) {
     g_loaded_root_actions = parse_json_array_to_key_actions(root_array);
 
     g_object_unref(parser);
+    print_timing_milestone("JSON loading completed");
 }
 
 static void free_loaded_key_actions(KeyAction *actions_to_free) {
@@ -178,11 +201,6 @@ static void free_loaded_key_actions(KeyAction *actions_to_free) {
 
 static void update_display_label() {
     GString *text_to_display = g_string_new("");
-    // if (current_key_sequence->len > 0) {
-    //     g_string_append_printf(text_to_display, "Pressed: %s\n\n", current_key_sequence->str);
-    // } // "Pressed:" text removed as per request
-
-    // g_string_append(text_to_display, "Available keys:\n"); // Text removed as per request
 
     if (current_node_options) {
         int num_options = 0;
@@ -265,6 +283,13 @@ static void reset_key_sequence() {
 }
 
 static void process_key_press(const char* key_name_char_array) {
+    // Measure time to first input
+    if (!first_input_received) {
+        first_input_received = TRUE;
+        print_timing_milestone("FIRST INPUT RECEIVED");
+        g_print("[TIMING] === TIME TO FIRST INPUT: %.2f ms ===\n", get_elapsed_ms(app_start_time));
+    }
+
     // Handle Backspace to go up a level
     if (g_strcmp0(key_name_char_array, "Backspace") == 0) {
         if (current_key_sequence->len > 0) {
@@ -369,7 +394,14 @@ static gboolean on_key_pressed_event(
     return TRUE; // Event handled, stop propagation
 }
 
+// Callback to measure when window is actually ready for input
+static void on_window_mapped(GtkWidget *window, gpointer user_data) {
+    print_timing_milestone("Window mapped (visible and ready)");
+}
+
 static void activate(GtkApplication *app, gpointer user_data) {
+    print_timing_milestone("GTK activate callback started");
+    
     GtkWidget *window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Modali Launcher");
     gtk_window_set_default_size(GTK_WINDOW(window), 1200, 350); // Wider window
@@ -379,12 +411,9 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window), FALSE); // For a minimal look
 
+    print_timing_milestone("Window created and configured");
+
     GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0); // Spacing set to 0, CSS handles padding
-    // Margins removed to prevent 'white border' effect, CSS padding will handle spacing
-    // gtk_widget_set_margin_start(main_box, 0);
-    // gtk_widget_set_margin_end(main_box, 0);
-    // gtk_widget_set_margin_top(main_box, 0);
-    // gtk_widget_set_margin_bottom(main_box, 0);
     gtk_widget_add_css_class(main_box, "modali-main-box");
     gtk_window_set_child(GTK_WINDOW(window), main_box);
 
@@ -404,6 +433,8 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_label_set_justify(GTK_LABEL(info_label), GTK_JUSTIFY_CENTER); // Center the text content
     gtk_box_append(GTK_BOX(main_box), info_label);
 
+    print_timing_milestone("Widget hierarchy created");
+
     // Initialize global state
     current_key_sequence = g_string_new("");
 
@@ -415,6 +446,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
     current_node_options = g_loaded_root_actions; // Start with loaded root options
 
     // Load CSS
+    print_timing_milestone("CSS loading started");
     GtkCssProvider *provider = gtk_css_provider_new();
     char *style_path_final = NULL;
     char resolved_exe_path[PATH_MAX];
@@ -448,29 +480,44 @@ static void activate(GtkApplication *app, gpointer user_data) {
         GTK_STYLE_PROVIDER_PRIORITY_USER
     );
     g_object_unref(provider); // Unref provider after adding it
+    print_timing_milestone("CSS loading completed");
 
-    // Initialize global state (key bindings, etc.)
-    // load_key_bindings_from_json("bindings.json"); // Redundant: Already loaded before 'Widget creation' log
-    // current_node_options = g_loaded_root_actions; // Redundant: Already set
-    update_display_label(); // Initial display update (already timed internally)
+    update_display_label(); // Initial display update
+    print_timing_milestone("Initial display updated");
 
     // Setup key event controller
     GtkEventController *key_controller = gtk_event_controller_key_new();
     g_signal_connect(key_controller, "key-pressed", G_CALLBACK(on_key_pressed_event), NULL);
     gtk_widget_add_controller(window, key_controller); // Add controller to window
 
+    // Connect to window mapped signal to know when it's actually visible
+    g_signal_connect(window, "map", G_CALLBACK(on_window_mapped), NULL);
+
     gtk_widget_add_css_class(window, "modali-launcher"); // Apply top-level window CSS class
     gtk_widget_set_visible(window, TRUE);
+    print_timing_milestone("Window set visible");
+    
     gtk_window_present(GTK_WINDOW(window)); // Ensure window gets focus
+    print_timing_milestone("Window presented (focus requested)");
 }
 
 int main(int argc, char **argv) {
+    // Record start time immediately
+    gettimeofday(&app_start_time, NULL);
+    g_print("[TIMING] === APPLICATION STARTUP TIMING ===\n");
+    print_timing_milestone("Application main() started");
+
     // Force Cairo renderer for GSK to ensure fast startup
     setenv("GSK_RENDERER", "cairo", 1); // 1 means overwrite if already set
+    print_timing_milestone("Environment configured");
 
     GtkApplication *app = gtk_application_new("org.example.modali.launcher", G_APPLICATION_DEFAULT_FLAGS);
-    g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+    print_timing_milestone("GtkApplication created");
     
+    g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+    print_timing_milestone("Activate signal connected");
+    
+    g_print("[TIMING] Starting g_application_run...\n");
     int status = g_application_run(G_APPLICATION(app), argc, argv);
     
     // Cleanup global GString
@@ -482,5 +529,6 @@ int main(int argc, char **argv) {
     }
     g_object_unref(app);
     
+    g_print("[TIMING] Application exited with status: %d\n", status);
     return status;
 }
