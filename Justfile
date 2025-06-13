@@ -2,9 +2,13 @@
 default:
   @just --list
 
-# Run for dev
+# Run for dev json
 run:
   cargo run -- -i bindings.json
+
+# Run for dev ron
+run_ron:
+  cargo run -- -i bindings.ron
 
 # Run tests
 test:

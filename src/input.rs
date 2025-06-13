@@ -1,14 +1,11 @@
-use crate::gui;
+use crate::{gui, util, whichtree};
+
+use crate::whichtree::WhichTreeKind;
 use iced_runtime::Action;
 
 use iced::{
     Task as Command,
     keyboard::{self, Modifiers},
-};
-
-use crate::{
-    parser::{self, WhichTreeKind},
-    util,
 };
 
 pub fn handle_keyboard_input(
@@ -32,7 +29,7 @@ pub fn handle_keyboard_input(
 
                 state.buffer.push_str(&key);
 
-                match parser::search_which_tree(&state.whichtree, &state.buffer) {
+                match whichtree::search_which_tree(&state.whichtree, &state.buffer) {
                     Some(x) => match &x.kind {
                         WhichTreeKind::Command(cmd) => {
                             util::run_command_detached(cmd).unwrap();
