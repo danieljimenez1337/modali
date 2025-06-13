@@ -16,6 +16,22 @@ pub enum Action {
     },
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum TypedAction {
+    SubAction {
+        key: String,
+        description: String,
+        sub_actions: Vec<TypedAction>,
+    },
+
+    KeyAction {
+        key: String,
+        description: String,
+        command: String,
+    },
+}
+
 impl Action {
     pub fn to_tree_node(&self) -> WhichTreeNode {
         match self {
@@ -51,22 +67,6 @@ impl Action {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum TypedAction {
-    SubAction {
-        key: String,
-        description: String,
-        sub_actions: Vec<Action>,
-    },
-
-    KeyAction {
-        key: String,
-        description: String,
-        command: String,
-    },
-}
-
 impl From<TypedAction> for Action {
     fn from(typed: TypedAction) -> Self {
         match typed {
@@ -77,7 +77,7 @@ impl From<TypedAction> for Action {
             } => Action::SubAction {
                 key,
                 description,
-                sub_actions: sub_actions.into_iter().collect(),
+                sub_actions: sub_actions.into_iter().map(Into::into).collect(),
             },
             TypedAction::KeyAction {
                 key,
@@ -118,16 +118,15 @@ mod tests {
     #[test]
     fn test_load_config_file() {
         let contents = fs::read_to_string("bindings.json").unwrap();
-        let config: Vec<Action> = serde_json::from_str(&contents).unwrap();
+        let config: Vec<TypedAction> = serde_json::from_str(&contents).unwrap();
         let json = serde_json::to_string_pretty(&config).unwrap();
         insta::assert_snapshot!(json)
     }
 
     #[test]
     fn test_load_ron_binding_file() {
-        let contents = fs::read_to_string("bindings.json").unwrap();
-        let config: Vec<Action> = serde_json::from_str(&contents).unwrap();
-        println!("Got Actions");
+        let contents = fs::read_to_string("bindings.ron").unwrap();
+        let config: Vec<Action> = ron::from_str(&contents).unwrap();
         let ron = ron::ser::to_string_pretty(&config, PrettyConfig::default()).unwrap();
         insta::assert_snapshot!(ron)
     }
