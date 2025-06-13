@@ -1,7 +1,7 @@
 use crate::input;
-use crate::parser;
-use crate::parser::{WhichTreeKind, WhichTreeNode};
 use crate::util;
+use crate::whichtree;
+use crate::whichtree::{WhichTreeKind, WhichTreeNode};
 use iced::widget::{Column, container, row, text};
 use iced::{Alignment, Color, Element, Event, Length, Task as Command, Theme, event};
 use iced_layershell::Application;
@@ -58,7 +58,7 @@ impl Application for Modali {
         let mut col1 = Column::new();
         let mut col2 = Column::new();
 
-        let children = match parser::search_which_tree(&self.whichtree, &self.buffer) {
+        let children = match whichtree::search_which_tree(&self.whichtree, &self.buffer) {
             Some(x) => match &x.kind {
                 WhichTreeKind::Command(_) => &Vec::new(),
                 WhichTreeKind::Children(x) => &x.clone(),

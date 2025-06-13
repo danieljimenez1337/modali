@@ -1,4 +1,5 @@
-use crate::parser::{self, Action, WhichTreeNode};
+use crate::parser::{self, Action, TypedAction};
+use crate::whichtree::WhichTreeNode;
 use color_eyre::eyre::{Result, eyre};
 use std::path::PathBuf;
 use std::process::Command;
@@ -78,8 +79,11 @@ pub fn load_keybindings(input: Option<String>) -> Result<WhichTreeNode> {
     let file = load_config_file(input, "bindings")?;
 
     let actions: Vec<Action> = match file {
-        Filetype::Json(x) => serde_json::from_str(&x)?,
-        Filetype::Ron(x) => ron::from_str(&x)?,
+        Filetype::Json(x) => serde_json::from_str::<Vec<TypedAction>>(&x)?
+            .into_iter()
+            .map(Into::into)
+            .collect(),
+        Filetype::Ron(x) => ron::from_str::<Vec<Action>>(&x)?,
     };
 
     Ok(parser::actions_to_tree(&actions))

@@ -1,38 +1,33 @@
 [
 	{
-		"KeyAction": {
-			"key": "r",
-			"description": "Open Rofi",
-			"command": "rofi -show drun"
-		}
+		"type": "KeyAction",
+		"key": "r",
+		"description": "Open Rofi",
+		"command": "rofi -show drun"
 	},
 	{
-		"KeyAction": {
-			"key": "g",
-			"description": "Go to Google",
-			"command": "xdg-open https://google.com"
-		}
+		"type": "KeyAction",
+		"key": "g",
+		"description": "Go to Google",
+		"command": "xdg-open https://google.com"
 	},
 	{
-		"SubAction": {
-			"key": "f",
-			"description": "Firefox options...",
-			"sub_actions": [
-				{
-					"KeyAction": {
-						"key": "f",
-						"description": "Launch Firefox",
-						"command": "firefox"
-					}
-				},
-				{
-					"KeyAction": {
-						"key": "e",
-						"description": "Edit this config",
-						"command": "xdg-open bindings.json"
-					}
-				}
-			]
-		}
+		"type": "SubAction",
+		"key": "f",
+		"description": "Firefox options...",
+		"sub_actions": [
+			{
+				"type": "KeyAction",
+				"key": "f",
+				"description": "Launch Firefox",
+				"command": "firefox"
+			},
+			{
+				"type": "KeyAction",
+				"key": "e",
+				"description": "Edit this config",
+				"command": "xdg-open bindings.json"
+			}
+		]
 	}
 ]

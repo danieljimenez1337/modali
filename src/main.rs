@@ -9,6 +9,7 @@ mod gui;
 mod input;
 mod parser;
 mod util;
+mod whichtree;
 
 #[derive(Parser, Debug, Default)]
 #[command(name = "Modali", about = "Which Like Launcher")]
