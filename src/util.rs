@@ -83,7 +83,7 @@ pub fn load_keybindings(input: Option<String>) -> Result<WhichTreeNode> {
             .into_iter()
             .map(Into::into)
             .collect(),
-        Filetype::Ron(x) => ron::from_str::<Vec<Action>>(&x)?,
+        Filetype::Ron(x) => ron::from_str(&x)?,
     };
 
     Ok(parser::actions_to_tree(&actions))
